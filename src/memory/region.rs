@@ -1,8 +1,7 @@
-
-use std::io::SeekFrom;
 use std::fs::File;
-use std::io::Seek;
 use std::io::Read;
+use std::io::Seek;
+use std::io::SeekFrom;
 
 #[derive(Debug, Clone)]
 pub struct MemRegion {
@@ -20,17 +19,16 @@ pub struct MemRegion {
 impl MemRegion {
     pub fn find_pattern(&self, file: &mut File, pat: &[u8]) -> Vec<usize> {
         let dest = (self.addr_to - self.addr_from) as usize;
-        
         file.seek(SeekFrom::Start(self.addr_from as u64)).unwrap();
         let mut buf = [0 as u8; 4096];
         let mut bytes_left = file.read(&mut buf).unwrap();
-        
         let mut occ: Vec<usize> = vec![]; // Final search results
         let mut occ_partial: Vec<usize> = vec![]; // Absolute index of matches that are correct till now
         let mut read_offset = 0;
 
         for i in 0..dest {
-            if bytes_left <= 0 { // If there are no bytes left to read in the buffer, read more
+            if bytes_left <= 0 {
+                // If there are no bytes left to read in the buffer, read more
                 bytes_left = file.read(&mut buf).unwrap();
                 if bytes_left == 0 {
                     println!("no bytes left");
@@ -44,7 +42,9 @@ impl MemRegion {
                 if ocp + pat.len() <= i {
                     occ.push(*ocp);
                     false
-                } else { true }
+                } else {
+                    true
+                }
             });
             // Only retain partial matches that still match the current new byte.
             occ_partial.retain(|ocp| {
@@ -56,14 +56,38 @@ impl MemRegion {
                 occ_partial.push(i);
             }
         }
-        return occ
+        return occ;
     }
 
     pub fn addr_absolute(&self, addr: usize) -> usize {
-        if addr + self.addr_from > self.addr_to { panic!("Trying to access memory out of bounds from this region"); }
+        if addr + self.addr_from > self.addr_to {
+            panic!("Trying to access memory out of bounds from this region");
+        }
         addr + self.addr_from
     }
-
 }
 
-
+impl std::fmt::Display for MemRegion {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        let mut perms = String::new();
+        if self.perm_read {
+            perms += "r";
+        } else {
+            perms += "-"
+        }
+        if self.perm_write {
+            perms += "w";
+        } else {
+            perms += "-"
+        }
+        if self.perm_execute {
+            perms += "x";
+        } else {
+            perms += "-"
+        }
+        formatter.write_str(format!(
+            "[{}] {} {:#x}-{:#x} {} {}",
+            self.index, perms, self.addr_from, self.addr_to, self.inode, self.path
+        ).as_str())
+    }
+}

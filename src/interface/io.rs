@@ -10,7 +10,7 @@ pub struct CIState {
     pub pid: i32,
     pub mem: ProcMem,
 
-    pub region_constraints: Option<MemRegionContraints>
+    pub region_constraints: Option<MemRegionContraints>,
 }
 
 
@@ -30,8 +30,9 @@ impl CIState {
             print!(">");
             std::io::stdout().flush().unwrap();
             std::io::stdin().read_line(&mut s).unwrap();
-                        
-            if let Err(e) = self.dispatch_command(s) {
+            
+            if s.starts_with("q") { println!("bye kek"); break; }
+            else if let Err(e) = self.dispatch_command(s) {
                 println!("ERR: {:?}",e);
             }
         }
@@ -46,7 +47,11 @@ impl CIState {
         match com {
             "maps" | "m" => self.list_maps(),
             "use_region" | "use" | "u" => self.use_regions(cargs),
-            _ => Err(CommandErr::CommandNotFound())
+            "show_used_regions" | "show_used" | "su" => self.show_used_regions(),
+            "clear" | "cls" | "c" => { print!("\x1B[2J\x1B[1;1H"); Ok(())},
+            "search" | "s" => self.command_search(cargs),
+            "update_maps" | "um" => { self.mem.maps.update_mapping(self.pid); return Ok(()) },
+            _ => Err(CommandErr::CommandNotFound()),
         }
     }
 }

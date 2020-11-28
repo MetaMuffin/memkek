@@ -1,5 +1,6 @@
 use crate::memory::region::MemRegion;
 
+#[derive(Debug)]
 pub struct MemRegionContraints {
     pub perm_read: Option<bool>,
     pub perm_write: Option<bool>,
@@ -27,7 +28,7 @@ impl MemRegionContraints {
         if let Some(p) = self.perm_execute {
             if reg.perm_execute != p { return false; }
         }
-        if let Some(p) = self.perm_execute {
+        if let Some(p) = self.inode {
             if (reg.inode != 0) != p { return false; }
         }
         if let Some(i) = &self.indecies {
